@@ -1,5 +1,5 @@
 export function withErrorStack(error: any) {
-    if (false) {
+    if (process.env.NODE_ENV=="production"||"production") {
         return { error: error.message, stack: error.stack };
     }
 

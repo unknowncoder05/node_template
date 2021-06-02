@@ -3,37 +3,58 @@ const express = require("express")
 const {errorHandler} = require("./middlewares/errors")
 const {validationHandler} = require("./middlewares/validations")
 const { movieIdSchema, movieSchema } = require("./models/mocks")
+const passport = require("passport")
+const GoogleStrategy = require('passport-google').Strategy;
 //import express from "express";
 
 class Aplication{
     app
     router
     db:any = {
-        "1111":{muvi:"lel"}
+        "1111":{
+            title:"revenge III",
+            year: 2010
+          }
     }
+    port:string = process.env.PORT as string|"3000"
+    users:any = {}
     constructor(){
         this.app = express()
         this.router = express.Router();
-        this.midleWares() // befor everything
+        this.midleWares() // before everything
+        this.configAuth()
         this.routes()
         this.app.use('/', this.router) // after midle wares
-        this.errorMidleWares() // after everything
+        this.finalMidleWares() // after everything
     }
     routes(){
         this.router.get("/",this.home)
-        this.router.get("/time",this.time)
-        this.router.post("/movie",validationHandler(movieSchema),this.post_movie())//
+        this.router.get("/time", this.time)
+        this.router.post("/movie", validationHandler(movieSchema),this.post_movie())//
         //this.router.post("/movie" ,this.post_movie())
-        this.router.get("/movie/:id",validationHandler({ id: movieIdSchema }, 'params'),this.get_movie())
+        this.router.get("/movie/:id", validationHandler({ id: movieIdSchema }, 'params'),this.get_movie())
+
+        this.app.get('/auth/google', passport.authenticate('google'));
+
+        this.app.get('/auth/google/return', 
+        passport.authenticate('google', { failureRedirect: '/' }),
+        function(req:any, res:any) {
+            // Successful authentication, redirect home.
+            res.redirect('/');
+        });
     }
     midleWares(){
         this.app.use(express.json());
-        this.app.use(function (req:any, res:any, next:any) {
-            console.log(Date.now(),req.ip,req.method,req.url)
-            next();
-        });
+        if (process.env.NODE_ENV=="production"){
+            this.app.use(function (req:any, res:any, next:any) {
+                console.log(Date.now(),req.ip,req.method,req.url)
+                next();
+            });
+        }
+        this.app.use(passport.initialize());
+        this.app.use(passport.session());
     }
-    errorMidleWares(){
+    finalMidleWares(){
         this.app.use(errorHandler)
     }
     home(req:any,res:any,next:any){
@@ -84,8 +105,21 @@ class Aplication{
         
     }
     listen(){
-        console.log("Listening in port",process.env.PORT as string|"3000")
-        this.app.listen(process.env.PORT as string|"3000")
+        console.log("Listening in port", this.port)
+        this.app.listen(this.port)
+    }
+    configAuth(){
+        let users = this.users
+        passport.use(new GoogleStrategy({
+            returnURL: `http://localhost:${this.port}/auth/google/return`,
+            realm: `http://localhost:${this.port}/`
+          },
+          function(identifier:any, done:any) {
+            users.findByOpenID({ openId: identifier }, function (err:any, user:any) {
+              return done(err, user);
+            });
+          }
+        ));
     }
 }
 

@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.errorHandler = exports.withErrorStack = void 0;
 function withErrorStack(error) {
-    if (false) {
+    if (process.env.NODE_ENV == "production" || "production") {
         return { error: error.message, stack: error.stack };
     }
     return {
