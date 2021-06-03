@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.get = void 0;
-var http = require('https');
+exports.post = exports.get = void 0;
+var http = require('http');
 function get(options) {
     return new Promise(function (resolve, reject) {
         try {
-            var req_1 = http.request(options, function (res) {
+            var req = http.request(options, function (res) {
                 console.log("statusCode: " + res.statusCode);
                 var data = '';
                 res.on('data', function (chunk) {
@@ -15,10 +15,10 @@ function get(options) {
                     resolve(data);
                 });
             });
-            req_1.on('error', function (error) {
+            req.on('error', function (error) {
                 console.error(error);
             });
-            req_1.end();
+            req.end();
         }
         catch (error) {
             reject(error);
@@ -26,3 +26,28 @@ function get(options) {
     });
 }
 exports.get = get;
+function post(options, data) {
+    return new Promise(function (resolve, reject) {
+        try {
+            var req = http.request(options, function (res) {
+                console.log("statusCode: " + res.statusCode);
+                var data = '';
+                res.on('data', function (chunk) {
+                    data += chunk;
+                });
+                res.on('end', function () {
+                    resolve(data);
+                });
+            });
+            req.on('error', function (error) {
+                console.error(error);
+            });
+            req.write(data);
+            req.end();
+        }
+        catch (error) {
+            reject(error);
+        }
+    });
+}
+exports.post = post;

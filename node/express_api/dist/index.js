@@ -1,11 +1,11 @@
 "use strict";
-console.clear();
+if (process.env.NODE_ENV == "production")
+    console.clear();
 var express = require("express");
 var errorHandler = require("./middlewares/errors").errorHandler;
 var validationHandler = require("./middlewares/validations").validationHandler;
 var _a = require("./models/mocks"), movieIdSchema = _a.movieIdSchema, movieSchema = _a.movieSchema;
-var passport = require("passport");
-var GoogleStrategy = require('passport-google').Strategy;
+var _b = require("./auth/jwtAuth"), jwtAuth = _b.jwtAuth, jwtAuthValidation = _b.jwtAuthValidation;
 var Aplication = (function () {
     function Aplication() {
         this.db = {
@@ -15,7 +15,14 @@ var Aplication = (function () {
             }
         };
         this.port = process.env.PORT;
-        this.users = {};
+        this.users = {
+            "liam@mail.com": {
+                "id": "1",
+                "secretdata": "likes chocolate",
+                "username": "liam",
+                "password": "exposedpassword"
+            }
+        };
         this.app = express();
         this.router = express.Router();
         this.midleWares();
@@ -25,14 +32,17 @@ var Aplication = (function () {
         this.finalMidleWares();
     }
     Aplication.prototype.routes = function () {
+        var _this = this;
         this.router.get("/", this.home);
         this.router.get("/time", this.time);
+        this.router.post("/auth", jwtAuth(this.app.get('secret'), function (usr, psw) {
+            if (usr in _this.users)
+                return psw === _this.users[usr].password;
+            return false;
+        }));
+        this.router.get("/ptime", this.authMidleware(), this.time);
         this.router.post("/movie", validationHandler(movieSchema), this.post_movie());
         this.router.get("/movie/:id", validationHandler({ id: movieIdSchema }, 'params'), this.get_movie());
-        this.app.get('/auth/google', passport.authenticate('google'));
-        this.app.get('/auth/google/return', passport.authenticate('google', { failureRedirect: '/' }), function (req, res) {
-            res.redirect('/');
-        });
     };
     Aplication.prototype.midleWares = function () {
         this.app.use(express.json());
@@ -42,8 +52,6 @@ var Aplication = (function () {
                 next();
             });
         }
-        this.app.use(passport.initialize());
-        this.app.use(passport.session());
     };
     Aplication.prototype.finalMidleWares = function () {
         this.app.use(errorHandler);
@@ -55,6 +63,15 @@ var Aplication = (function () {
         res.status(200).json({
             message: 'server time',
             date: Date.now()
+        });
+    };
+    Aplication.prototype.authMidleware = function () {
+        return jwtAuthValidation(this.app.get('secret'));
+    };
+    Aplication.prototype.post_auth = function () {
+        var _this = this;
+        return jwtAuth(this.app.get('secret'), function (usr, psw) {
+            return psw === _this.users[usr].password;
         });
     };
     Aplication.prototype.post_movie = function () {
@@ -99,15 +116,7 @@ var Aplication = (function () {
         this.app.listen(this.port);
     };
     Aplication.prototype.configAuth = function () {
-        var users = this.users;
-        passport.use(new GoogleStrategy({
-            returnURL: "http://localhost:" + this.port + "/auth/google/return",
-            realm: "http://localhost:" + this.port + "/"
-        }, function (identifier, done) {
-            users.findByOpenID({ openId: identifier }, function (err, user) {
-                return done(err, user);
-            });
-        }));
+        this.app.set('secret', process.env.SECRET);
     };
     return Aplication;
 }());

@@ -1,10 +1,10 @@
-console.clear()
+if (process.env.NODE_ENV!="production") console.clear();
 const express = require("express")
 const {errorHandler} = require("./middlewares/errors")
 const {validationHandler} = require("./middlewares/validations")
 const { movieIdSchema, movieSchema } = require("./models/mocks")
-const passport = require("passport")
-const GoogleStrategy = require('passport-google').Strategy;
+const { jwtAuth, jwtAuthValidation } = require("./auth/jwtAuth")
+
 //import express from "express";
 
 class Aplication{
@@ -17,7 +17,14 @@ class Aplication{
           }
     }
     port:string = process.env.PORT as string|"3000"
-    users:any = {}
+    users:any = {
+        "liam@mail.com":{
+            "id":"1",
+            "secretdata":"likes chocolate",
+            "username":"liam",
+            "password":"exposedpassword"
+        }
+    }
     constructor(){
         this.app = express()
         this.router = express.Router();
@@ -30,18 +37,20 @@ class Aplication{
     routes(){
         this.router.get("/",this.home)
         this.router.get("/time", this.time)
+        //this.router.post("/auth", this.post_auth())
+        this.router.post("/auth", jwtAuth(this.app.get('secret'), 
+        (usr:any,psw:any) => {
+            if(usr in this.users)
+                return psw === this.users[usr].password
+            return false
+        }) 
+        )
+        this.router.get("/ptime", this.authMidleware(), this.time)
         this.router.post("/movie", validationHandler(movieSchema),this.post_movie())//
         //this.router.post("/movie" ,this.post_movie())
         this.router.get("/movie/:id", validationHandler({ id: movieIdSchema }, 'params'),this.get_movie())
+        
 
-        this.app.get('/auth/google', passport.authenticate('google'));
-
-        this.app.get('/auth/google/return', 
-        passport.authenticate('google', { failureRedirect: '/' }),
-        function(req:any, res:any) {
-            // Successful authentication, redirect home.
-            res.redirect('/');
-        });
     }
     midleWares(){
         this.app.use(express.json());
@@ -51,8 +60,6 @@ class Aplication{
                 next();
             });
         }
-        this.app.use(passport.initialize());
-        this.app.use(passport.session());
     }
     finalMidleWares(){
         this.app.use(errorHandler)
@@ -65,6 +72,15 @@ class Aplication{
             message: 'server time',
             date : Date.now()
           });
+    }
+    authMidleware(){
+        return jwtAuthValidation(this.app.get('secret'))
+    }
+    post_auth(){
+        return jwtAuth(this.app.get('secret'), 
+        (usr:any,psw:any) => {
+            return psw === this.users[usr].password
+        }) 
     }
     post_movie(){
         let ddbb = this.db
@@ -104,22 +120,14 @@ class Aplication{
         }
         
     }
+    
+    
     listen(){
         console.log("Listening in port", this.port)
         this.app.listen(this.port)
     }
     configAuth(){
-        let users = this.users
-        passport.use(new GoogleStrategy({
-            returnURL: `http://localhost:${this.port}/auth/google/return`,
-            realm: `http://localhost:${this.port}/`
-          },
-          function(identifier:any, done:any) {
-            users.findByOpenID({ openId: identifier }, function (err:any, user:any) {
-              return done(err, user);
-            });
-          }
-        ));
+        this.app.set('secret', process.env.SECRET);
     }
 }
 
