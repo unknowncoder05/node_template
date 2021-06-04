@@ -24,7 +24,6 @@ export function jwtAuthValidation(secret:any){
 
 export function jwtAuth(secret:any,validateCredentials:Function){
     return (req:any,res:any,next:any) => {
-        console.log(req.body.password)
         if(validateCredentials(req.body.email,req.body.password) ) { // HACK: add some SEC here
             let payload = {
             check:  true

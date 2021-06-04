@@ -38,7 +38,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 var _a = require('./utils'), get = _a.get, post = _a.post;
 function main() {
     return __awaiter(this, void 0, void 0, function () {
-        var data, options, tokenRes;
+        var data, options, tokenRes, token, Res;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -59,7 +59,21 @@ function main() {
                     return [4, post(options, data)];
                 case 1:
                     tokenRes = _a.sent();
-                    console.log(tokenRes);
+                    token = JSON.parse(tokenRes).token;
+                    console.log("logged!!");
+                    options = {
+                        hostname: 'localhost',
+                        port: 3000,
+                        path: '/ptime',
+                        method: 'GET',
+                        headers: {
+                            'access-token': token
+                        },
+                    };
+                    return [4, post(options, data)];
+                case 2:
+                    Res = _a.sent();
+                    console.log(Res);
                     return [2];
             }
         });

@@ -26,7 +26,6 @@ function jwtAuthValidation(secret) {
 exports.jwtAuthValidation = jwtAuthValidation;
 function jwtAuth(secret, validateCredentials) {
     return function (req, res, next) {
-        console.log(req.body.password);
         if (validateCredentials(req.body.email, req.body.password)) {
             var payload = {
                 check: true
