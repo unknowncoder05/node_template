@@ -1,5 +1,6 @@
 if (process.env.NODE_ENV!="production") console.clear();
 const express = require("express")
+const cors = require("cors");
 const { errorHandler } = require("./middlewares/errors")
 const {validationHandler} = require("./middlewares/validations")
 const { movieIdSchema, movieSchema } = require("./models/mocks")
@@ -38,13 +39,7 @@ export class Aplication{
         this.router.get("/",this.home)
         this.router.get("/time", this.time)
         //this.router.post("/auth", this.post_auth())
-        this.router.post("/auth", jwtAuth(this.app.get('secret'), 
-        (usr:any,psw:any) => {
-            if(usr in this.users)
-                return psw === this.users[usr].password
-            return false
-        }) 
-        )
+        this.router.post("/auth", this.post_auth())
         this.router.get("/ptime", this.authMidleware(), this.time)
         this.router.post("/movie", validationHandler(movieSchema),this.post_movie())//
         //this.router.post("/movie" ,this.post_movie())
@@ -59,6 +54,9 @@ export class Aplication{
                 console.log(Date.now(),req.ip,req.method,req.url)
                 next();
             });
+        }
+        else{
+            this.app.use(cors());
         }
     }
     finalMidleWares(){
@@ -79,8 +77,10 @@ export class Aplication{
     post_auth(){
         return jwtAuth(this.app.get('secret'), 
         (usr:any,psw:any) => {
-            return psw === this.users[usr].password
-        }) 
+            if(usr in this.users)
+                return psw === this.users[usr].password
+            return false
+        })
     }
     post_movie(){
         let ddbb = this.db
