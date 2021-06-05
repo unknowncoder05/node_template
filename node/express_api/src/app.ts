@@ -2,9 +2,10 @@ if (process.env.NODE_ENV!="production") console.clear();
 const express = require("express")
 const cors = require("cors");
 const { errorHandler } = require("./middlewares/errors")
-const {validationHandler} = require("./middlewares/validations")
+const { validationHandler } = require("./middlewares/validations")
 const { movieIdSchema, movieSchema } = require("./models/mocks")
 const { jwtAuth, jwtAuthValidation } = require("./auth/jwtAuth")
+const { DB } = require("./database/db")
 
 //import express from "express";
 
@@ -34,6 +35,8 @@ export class Aplication{
         this.routes()
         this.app.use('/', this.router) // after midle wares
         this.finalMidleWares() // after everything
+        console.log("There you have a DB")
+        let db = new DB(process.env.MDB_USER,process.env.MDB_PASSWORD,process.env.MDB_CLUSTER)
     }
     routes(){
         this.router.get("/",this.home)
@@ -123,11 +126,11 @@ export class Aplication{
     
     
     listen(){
-        console.log("Listening in port", this.port)
-        this.app.listen(this.port)
+        this.app.listen(this.port,() =>{
+            console.log("Listening in port", this.port)
+        })
     }
     configAuth(){
         this.app.set('secret', process.env.SECRET);
     }
 }
-export const app = new Aplication().app

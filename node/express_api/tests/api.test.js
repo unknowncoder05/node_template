@@ -1,6 +1,6 @@
 const request = require("supertest")
-const { app } = require('./../dist/app')
-
+const { Aplication } = require('./../dist/app')
+const app = new Aplication()
 const testData = {
     token: null
 }
