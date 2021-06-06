@@ -12,37 +12,24 @@ const { DB } = require("./database/db")
 export class Aplication{
     app
     router
-    db:any = {
-        "1111":{
-            title:"revenge III",
-            year: 2010
-          }
-    }
+    db:typeof DB
     port:string = process.env.PORT as string|"3000"
-    users:any = {
-        "liam@mail.com":{
-            "id":"1",
-            "secretdata":"likes chocolate",
-            "username":"liam",
-            "password":"exposedpassword"
-        }
-    }
     constructor(){
         this.app = express()
         this.router = express.Router();
+        this.db = new DB(process.env.MDB_USER,process.env.MDB_PASSWORD,process.env.MDB_CLUSTER,process.env.MDB_DATABASE)
         this.midleWares() // before everything
         this.configAuth()
         this.routes()
         this.app.use('/', this.router) // after midle wares
         this.finalMidleWares() // after everything
-        console.log("There you have a DB")
-        let db = new DB(process.env.MDB_USER,process.env.MDB_PASSWORD,process.env.MDB_CLUSTER)
     }
     routes(){
         this.router.get("/",this.home)
         this.router.get("/time", this.time)
         //this.router.post("/auth", this.post_auth())
         this.router.post("/auth", this.post_auth())
+        this.router.post("/register", this.post_register)
         this.router.get("/ptime", this.authMidleware(), this.time)
         this.router.post("/movie", validationHandler(movieSchema),this.post_movie())//
         //this.router.post("/movie" ,this.post_movie())
@@ -79,15 +66,17 @@ export class Aplication{
     }
     post_auth(){
         return jwtAuth(this.app.get('secret'), 
-        (usr:any,psw:any) => {
-            if(usr in this.users)
-                return psw === this.users[usr].password
-            return false
+        async (usr:any,psw:any) => {
+            let auth = await this.db.authUser(usr, psw)
+            return auth
         })
+    }
+    post_register(email:string, name:string, password:string){
+        return this.db.createUser({email, name, password}, true)
     }
     post_movie(){
         let ddbb = this.db
-        return function(req:any,res:any,next:any){
+        return (req:any,res:any,next:any) => {
             try {
                 ddbb[req.body.id] = req.body
                 res.status(201).json({
@@ -131,6 +120,7 @@ export class Aplication{
         })
     }
     configAuth(){
+        //console.log("SECRET:",process.env.SECRET)
         this.app.set('secret', process.env.SECRET);
     }
 }
