@@ -5,10 +5,12 @@
 - Node
 - Express
 - TypeScript
+- Passport
+- MongoDB
 
 ### Attributes
 - CRUD*
-- Tests*
+- Tests
 - Security*
 
 
