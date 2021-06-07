@@ -29,7 +29,7 @@ export class Aplication{
         this.router.get("/time", this.time)
         //this.router.post("/auth", this.post_auth())
         this.router.post("/auth", this.post_auth())
-        this.router.post("/register", this.post_register)
+        this.router.post("/register", this.post_register())
         this.router.get("/ptime", this.authMidleware(), this.time)
         this.router.post("/movie", validationHandler(movieSchema),this.post_movie())//
         //this.router.post("/movie" ,this.post_movie())
@@ -71,8 +71,16 @@ export class Aplication{
             return auth
         })
     }
-    post_register(email:string, name:string, password:string){
-        return this.db.createUser({email, name, password}, true)
+    post_register(){
+        let ddbb = this.db
+        return async (req:any,res:any,next:any) => {
+            let new_user = await ddbb.createUser({
+                email:req.body.email,
+                name:req.body.name,
+                password:req.body.password
+            }, true)
+            res.status(201).json(new_user)
+        }
     }
     post_movie(){
         let ddbb = this.db

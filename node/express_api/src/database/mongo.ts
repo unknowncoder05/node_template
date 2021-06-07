@@ -1,13 +1,40 @@
 const mongoose = require('mongoose');
 const bcrypt = require("bcrypt")
+
+mongoose.set('useNewUrlParser', true);
+mongoose.set('useFindAndModify', false);
+mongoose.set('useCreateIndex', true);
+
+
 const userSchema = new mongoose.Schema({
-    email: String,
-    name: String,
-    password: String
+    email: {
+        type: String,
+        required: [true, "no email given"],
+        unique: true,
+    },
+    name: {
+        type: String,
+        required: [true, "no name given"]
+    },
+    password: {
+        type: String,
+        required: [true, "no password given"]
+    },
 });
 const movieSchema = new mongoose.Schema({
-    title: String,
-    year: Number
+    title: {
+        type: String,
+        required: [true, "no title given"]
+    },
+    year: {
+        type: Number,
+        required: [true, "no year given"]
+    },
+    category: {
+        type: String,
+        required: false,
+        enum: { values: ['action', 'drama', 'mistery', 'romance', 'horror'], message: '{VALUE} is not a category' }
+    },
 });
 const schemas = {
     userSchema,
@@ -65,7 +92,7 @@ export class MongoDB{
         let newMovie = new models.movieModel(movie);
         if(save){
             newMovie.save((err:any, movie:any) => {
-                if (err) return console.error(err);
+                if (err) return err;
                 if (process.env.NODE_ENV!="production") console.log("created movie:",movie.id)
               });
         }
@@ -76,29 +103,25 @@ export class MongoDB{
             if (err) return console.error(err);
         })
     }
-    async createUser(user:{email: String, name: String, password: String}, save:boolean=false){ // HACK: add validation here
-        
+    async createUser(user:{email: String, name: String, password: String}, save:boolean=false){
         user.password = await bcrypt.hash(user.password, parseInt(process.env.HASH_ROUNDS as string))
         let newUser = new models.userModel(user);
+        console.log("SAVING->");
         if(save){
-            newUser.save((err:any, user:any) => {
-                if (err) return console.error(err);
-                if (process.env.NODE_ENV!="production") console.log("created user:",user.id)
-              });
+            let res = await newUser.save()
+            console.log("CREATED USERRRRRRRRRRRRRRRRR",res)
         }
+        console.log("SAVED<-");
         return newUser
     }
     async authUser(email:string, psw:string){
-        let res = null
-        await models.userModel.find({email},async (err:any, user:any) => {
-            if (err) return console.error(err);
-            let authed = await compare(psw, user[0].password)
-            if (authed)
-                res = user
-            else
-                res = false
-        })
-        return res
+        let user = await models.userModel.find({email})
+        let authed = await compare(psw, user[0].password)
+        if(authed)
+            return user
+        else
+            return authed
+
     }
     close(){
         this.db.close()
