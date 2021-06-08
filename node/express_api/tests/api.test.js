@@ -21,7 +21,7 @@ describe("GET /time", () => {
 })
 
 describe("AUTHENTIACATION", () => {
-    it("/register respond created", async(done) => {
+    it("/register respond created", (done) => {
         let data = {
             "email": "1" + testCredentials.email,
             "name": "tester",
@@ -32,17 +32,17 @@ describe("AUTHENTIACATION", () => {
             .send(data)
             .set("Accept", "application/json")
             .expect("Content-Type", /json/)
-            .expect(201)
+            .expect(400)
             .end((err, res) => {
                 console.log("body:", res.body)
                 if (err) {
                     console.log("ERROR!!", err)
                     return done(err);
                 }
-                /*if (res.body.msg != "email or password are not valid")
+                if (res.body.msg != "email or password are not valid") {
                     return done(new Error("Expected an other msg"));
-                testData.token = res.body.token*/
-                done();
+                }
+                done()
             })
     })
     it("/auth respond not authed", (done) => {

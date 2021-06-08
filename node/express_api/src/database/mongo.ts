@@ -103,19 +103,31 @@ export class MongoDB{
             if (err) return console.error(err);
         })
     }
-    async createUser(user:{email: String, name: String, password: String}, save:boolean=false){
-        user.password = await bcrypt.hash(user.password, parseInt(process.env.HASH_ROUNDS as string))
-        let newUser = new models.userModel(user);
-        console.log("SAVING->");
-        if(save){
-            let res = await newUser.save()
-            console.log("CREATED USERRRRRRRRRRRRRRRRR",res)
-        }
-        console.log("SAVED<-");
-        return newUser
+    createUser(user:{email: String, name: String, password: String}, save:boolean=false){
+        return new Promise(
+            async function(resolve, reject) {
+                user.password = await bcrypt.hash(user.password, parseInt(process.env.HASH_ROUNDS as string))
+                let newUser = new models.userModel(user);
+                if(save){
+                    let res = newUser.save(function (err:any) {
+                        if (err) {
+                            reject(err);
+                        }
+                        else {
+                            resolve(newUser)
+                        }
+                        // saved!
+                      })
+                }
+            }
+        )
+        
     }
     async authUser(email:string, psw:string){
         let user = await models.userModel.find({email})
+        if(user.length == 0){
+            return false
+        }
         let authed = await compare(psw, user[0].password)
         if(authed)
             return user

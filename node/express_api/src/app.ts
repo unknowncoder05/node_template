@@ -74,12 +74,25 @@ export class Aplication{
     post_register(){
         let ddbb = this.db
         return async (req:any,res:any,next:any) => {
-            let new_user = await ddbb.createUser({
-                email:req.body.email,
-                name:req.body.name,
-                password:req.body.password
-            }, true)
-            res.status(201).json(new_user)
+            try {
+                let new_user = await ddbb.createUser({
+                    email:req.body.email,
+                    name:req.body.name,
+                    password:req.body.password
+                }, true)
+                res.status(201).json(new_user)
+            } catch (error) {
+                if(error.code == 11000){
+                    res.status(400).json({ msg:"email or password are not valid" })
+                }
+                else{
+                    res.status(500).json({ msg:"internal server error" })
+                }
+                
+            }
+            
+            
+            
         }
     }
     post_movie(){
@@ -92,7 +105,6 @@ export class Aplication{
                     date : Date.now()
                 });
             } catch(err){
-                console.error(err)
                 next(err)
             }
             

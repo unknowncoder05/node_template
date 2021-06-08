@@ -8,7 +8,7 @@ export function jwtAuthValidation(secret: any) {
     if (token) {
       jwt.verify(token, secret, (err: any, decoded: any) => {
         if (err) {
-          return res.json({ mensaje: 'Invalid token' });
+          return res.json({ msg: 'Invalid token' });
         } else {
           req.decoded = decoded;
           next();
@@ -16,7 +16,7 @@ export function jwtAuthValidation(secret: any) {
       });
     } else {
       res.send({
-        mensaje: 'This endpoint requires a token'
+        msg: 'This endpoint requires a token'
       });
     }
   }
