@@ -28,12 +28,13 @@ export class Aplication{
         this.router.get("/",this.home)
         this.router.get("/time", this.time)
         //this.router.post("/auth", this.post_auth())
-        this.router.post("/auth", this.post_auth())
-        this.router.post("/register", this.post_register())
+        this.router.post("/auth", this.postAuth())
+        this.router.post("/register", this.postRegister())
+
         this.router.get("/ptime", this.authMidleware(), this.time)
-        this.router.post("/movie", validationHandler(movieSchema),this.post_movie())//
+        this.router.post("/movie", this.authMidleware(), validationHandler(movieSchema),this.postMovie())//
         //this.router.post("/movie" ,this.post_movie())
-        this.router.get("/movie/:id", validationHandler({ id: movieIdSchema }, 'params'),this.get_movie())
+        this.router.get("/movie/:id", validationHandler({ id: movieIdSchema }, 'params'),this.getMovie())
         
 
     }
@@ -64,14 +65,14 @@ export class Aplication{
     authMidleware(){
         return jwtAuthValidation(this.app.get('secret'))
     }
-    post_auth(){
+    postAuth(){
         return jwtAuth(this.app.get('secret'), 
         async (usr:any,psw:any) => {
             let auth = await this.db.authUser(usr, psw)
             return auth
         })
     }
-    post_register(){
+    postRegister(){
         let ddbb = this.db
         return async (req:any,res:any,next:any) => {
             try {
@@ -95,38 +96,35 @@ export class Aplication{
             
         }
     }
-    post_movie(){
+    postMovie(){
         let ddbb = this.db
-        return (req:any,res:any,next:any) => {
+        return async (req:any,res:any,next:any) => {
             try {
-                ddbb[req.body.id] = req.body
+                let movie = await ddbb.createMovie(req.body, true) 
+                
                 res.status(201).json({
-                    message: 'recieved',
-                    date : Date.now()
+                    msg: 'created',
+                    data : movie
                 });
             } catch(err){
+                console.log("GOTCHAAAAAAAAAA",err)
                 next(err)
             }
             
         }
         
     }
-    get_movie(){
+    getMovie(){
         let ddbb = this.db
-        return function(req:any,res:any,next:any){
-            if (req.query.id in ddbb){
-                try {
-                    let obj_res = {
-                        message: 'found',
-                        date : Date.now(),
-                        data: ddbb[req.query.id]//req.params.id
-                    }
-                    res.status(200).json(obj_res);
-                } catch(err){
-                    next(err)
-                }
-            } else {
-                throw(new Error('Invalid id'))
+        return async (req:any,res:any,next:any) => {
+            try {
+                let movie = await ddbb.getMovie(req.query.id) 
+                res.status(201).json({
+                    msg: 'created',
+                    data : movie
+                });
+            } catch(err){
+                next(err)
             }
             
         }

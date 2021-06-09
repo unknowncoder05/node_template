@@ -10,8 +10,8 @@ const testCredentials = {
     "password": "admin123"
 }
 
-describe("GET /time", () => {
-    it("respond server time", (done) => {
+describe("TEST", () => {
+    it("/time respond server time", (done) => {
         request(app)
             .get("/time")
             .set("Accept", /json/)
@@ -21,7 +21,7 @@ describe("GET /time", () => {
 })
 
 describe("AUTHENTIACATION", () => {
-    it("/register respond created", (done) => {
+    it("/register respond email or password not valid", (done) => {
         let data = {
             "email": "1" + testCredentials.email,
             "name": "tester",
@@ -105,5 +105,31 @@ describe("AUTHENTIACATION", () => {
                     return done(new Error("Expected an other msg"));
                 done();
             });
+    })
+})
+
+describe("MOVIES", () => {
+    it("/movie respond created", (done) => {
+        let data = {
+            title: "test movie",
+            year: 2021
+        }
+        request(app)
+            .post("/movie")
+            .send(data)
+            .set("Accept", "application/json")
+            .set("access-token", testData.token)
+            .expect("Content-Type", /json/)
+            .expect(201)
+            .end((err, res) => {
+                console.log("body:", res.body)
+                if (err) {
+                    console.log("ERROR!!", err)
+                    return done(err);
+                }
+                if (res.body.msg != "created")
+                    return done(new Error("Expected an other msg"));
+                done();
+            })
     })
 })

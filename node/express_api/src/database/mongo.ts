@@ -48,6 +48,7 @@ const models = {
     movieModel
 }
 
+/*
 async function testData(db:MongoDB){
     let hulk = await db.createMovie({ title: "the big green guy", year: 2077 });
     hulk.save(function (err:any, movie:any) {
@@ -61,9 +62,8 @@ async function testData(db:MongoDB){
     console.log(admin)
     console.log( "fail:",await db.authUser("admin@mail.com","admin1234") )
     console.log( "pass:",await db.authUser("admin@mail.com","admin123") )
-    //*/
     
-}
+}*/
 
 async function compare(psw:string ,hash:string){
     let res = await bcrypt.compare(psw, hash)
@@ -72,7 +72,7 @@ async function compare(psw:string ,hash:string){
 export class MongoDB{
     db:any
     schemas:any = schemas
-    models:any = models
+    //models:any = models
     constructor(MDB_USER:string,MDB_PASSWORD:string,MDB_CLUSTER:string,MDB_DATABASE:string){
         let uri = `mongodb+srv://${MDB_USER}:${MDB_PASSWORD}@${MDB_CLUSTER}/${MDB_DATABASE}?retryWrites=true&w=majority`;
         mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology: true});
@@ -81,22 +81,48 @@ export class MongoDB{
         this.db.on('error', console.error.bind(console, 'connection error:'));
         this.db.once('open', function() {
             // we're connected!
-            if (process.env.NODE_ENV!="production") console.log("Sir, we are in")
         });
         //testData(this)
-        if (process.env.NODE_ENV!="production") console.log("loading movies...")
         //this.getMovies()
         
     }
-    async createMovie(movie:{title: String, year: Number}, save:boolean=false){ // HACK: add validation here
-        let newMovie = new models.movieModel(movie);
-        if(save){
-            newMovie.save((err:any, movie:any) => {
-                if (err) return err;
-                if (process.env.NODE_ENV!="production") console.log("created movie:",movie.id)
-              });
-        }
-        return newMovie
+    createMovie(movie:{title: String, year: Number}, save:boolean=false){ // HACK: add validation here
+        return new Promise(
+            async function(resolve, reject) {
+                let newMovie = new models.movieModel(movie);          
+                if(save){
+                    let res = newMovie.save(function (err:any) {      
+                        if (err) {
+                            reject(err);
+                        }
+                        else {
+                            resolve({id:newMovie._id})
+                        }
+                        // saved!
+                      })
+                }
+                else{
+                    resolve(newMovie)
+                }
+            }
+        )
+    }
+    getMovie(_id:String){
+        return new Promise(
+            async function(resolve, reject) {
+                let movie = await models.movieModel.find({_id},(err:any, movies:any) => {
+                    if (err) {
+                        reject(err);
+                    }
+                    else {
+                        if(movie.length == 0)
+                            reject({msg:"no movie with that ID"});
+                        else
+                            resolve(movie)
+                    }
+                })
+            }
+        )
     }
     async getMovies(){
         return await models.movieModel.find((err:any, movies:any) => {
@@ -114,7 +140,7 @@ export class MongoDB{
                             reject(err);
                         }
                         else {
-                            resolve(newUser)
+                            resolve({id:newUser._id})
                         }
                         // saved!
                       })
