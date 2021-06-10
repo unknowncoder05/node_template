@@ -17,7 +17,7 @@ export class Aplication{
     constructor(){
         this.app = express()
         this.router = express.Router();
-        this.db = new DB(process.env.MDB_USER,process.env.MDB_PASSWORD,process.env.MDB_CLUSTER,process.env.MDB_DATABASE)
+        this.db = new DB()
         this.midleWares() // before everything
         this.configAuth()
         this.routes()
@@ -132,10 +132,14 @@ export class Aplication{
     }
     
     
-    listen(){
-        this.app.listen(this.port,() =>{
-            console.log("Listening in port", this.port)
-        })
+    async listen(){
+        let connected = await this.db.connectDB(process.env.MDB_USER,process.env.MDB_PASSWORD,process.env.MDB_CLUSTER,process.env.MDB_DATABASE)
+        if(connected){
+            this.app.listen(this.port,() =>{
+                console.log("Listening in port", this.port)
+            })
+        }
+        
     }
     configAuth(){
         //console.log("SECRET:",process.env.SECRET)

@@ -73,17 +73,32 @@ export class MongoDB{
     db:any
     schemas:any = schemas
     //models:any = models
-    constructor(MDB_USER:string,MDB_PASSWORD:string,MDB_CLUSTER:string,MDB_DATABASE:string){
-        let uri = `mongodb+srv://${MDB_USER}:${MDB_PASSWORD}@${MDB_CLUSTER}/${MDB_DATABASE}?retryWrites=true&w=majority`;
-        mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology: true});
-        this.db = mongoose.connection
-
-        this.db.on('error', console.error.bind(console, 'connection error:'));
-        this.db.once('open', function() {
-            // we're connected!
-        });
+    constructor(){
+        // nothinbg DB related can be done here
         //testData(this)
         //this.getMovies()
+        
+    }
+    connectDB(MDB_USER:string,MDB_PASSWORD:string,MDB_CLUSTER:string,MDB_DATABASE:string){
+        let ddbb = this.db
+        return new Promise(
+            async function(resolve, reject) {
+                let uri = `mongodb+srv://${MDB_USER}:${MDB_PASSWORD}@${MDB_CLUSTER}/${MDB_DATABASE}?retryWrites=true&w=majority`;
+                mongoose.connect(uri, {useNewUrlParser: true, useUnifiedTopology: true});
+                ddbb = mongoose.connection
+
+                ddbb.on('error', (err:any) => {
+                    console.error("-<>Connection Failed<>-",err)
+                    resolve(err)
+                })
+                console.debug("<--Connecting to DB-->")
+                ddbb.once('open', function() {
+                    // we're connected!
+                    console.debug("-->Connected to DB<--")
+                    resolve(true)
+                });
+            }
+        )
         
     }
     createMovie(movie:{title: String, year: Number}, save:boolean=false){ // HACK: add validation here
@@ -170,31 +185,3 @@ export class MongoDB{
         })
     }*/
 }
-/*
-const kittySchema = new mongoose.Schema({
-    name: String
-  });
-const Kitten = mongoose.model('Kitten', kittySchema);
-const silence = new Kitten({ name: 'Silence' });
-
-kittySchema.methods.speak = function () {
-    const greeting = this.name
-      ? "Meow name is " + this.name
-      : "I don't have a name";
-    console.log(greeting);
-  }
-  
-const fluffy = new Kitten({ name: 'fluffy' });
-fluffy.speak();
-
-fluffy.save(function (err:any, fluffy:any) {
-    if (err) return console.error(err);
-    fluffy.speak();
-  });
-
-Kitten.find(function (err:any, kittens:any) {
-    if (err) return console.error(err);
-    console.log(kittens);
-})
-
-*/

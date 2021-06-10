@@ -69,6 +69,24 @@ describe("AUTHENTIACATION", () => {
                 done();
             });
     })
+    it("/auth respond invalid jwt token", (done) => {
+        request(app)
+            .get("/ptime")
+            .set("Accept", "application/json")
+            .set("access-token", "testDatatoken")
+            .expect("Content-Type", /json/)
+            .expect(401)
+            .end((err, res) => {
+                console.log("body:", res.body)
+                if (err) {
+                    console.log("ERROR!!", res.body.error)
+                    return done(err);
+                }
+                if (res.body.msg != "Invalid token")
+                    return done(new Error("Expected an other msg"));
+                done();
+            });
+    })
     it("/auth respond jwt token", (done) => {
         request(app)
             .post("/auth")

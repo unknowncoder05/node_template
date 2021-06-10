@@ -8,7 +8,7 @@ export function jwtAuthValidation(secret: any) {
     if (token) {
       jwt.verify(token, secret, (err: any, decoded: any) => {
         if (err) {
-          return res.json({ msg: 'Invalid token' });
+          return res.status(401).json({ msg: 'Invalid token' });
         } else {
           req.decoded = decoded;
           next();
