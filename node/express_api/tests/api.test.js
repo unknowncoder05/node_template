@@ -1,7 +1,9 @@
 require('dotenv').config({ path: './.env' })
 const request = require("supertest")
 const { Aplication } = require('./../dist/app')
-const app = new Aplication().app
+let myApp = new Aplication()
+myApp.listen()
+const app = myApp.app
 const testData = {
     token: null
 }
@@ -9,6 +11,11 @@ const testCredentials = {
     "email": "admin@mail.com",
     "password": "admin123"
 }
+before(function(done) {
+    app.on("serverStart", function() {
+        done();
+    });
+});
 
 describe("TEST", () => {
     it("/time respond server time", (done) => {
@@ -127,12 +134,60 @@ describe("AUTHENTIACATION", () => {
 })
 
 describe("MOVIES", () => {
+    var all_movies = [];
+    var created_movie = null;
+    it("/movie respond movies", (done) => {
+        request(app)
+            .get("/movies")
+            .set("Accept", "application/json")
+            .set("access-token", testData.token)
+            .expect("Content-Type", /json/)
+            .expect(200)
+            .end((err, res) => {
+                console.log("body:", res.body)
+                if (err) {
+                    console.log("ERROR!!", err)
+                    return done(err);
+                }
+                all_movies = res.body.data
+                if (res.body.msg != "found")
+                    return done(new Error("Expected an other msg"));
+                done();
+            })
+    })
+    if (all_movies.length != 0)
+        it("/movie respond movies", (done) => {
+            request(app)
+                .get("/movies/" + all_movies[0].id)
+                .set("Accept", "application/json")
+                .set("access-token", testData.token)
+                .expect("Content-Type", /json/)
+                .expect(200)
+                .end((err, res) => {
+                    console.log("body:", res.body)
+                    if (err) {
+                        console.log("ERROR!!", err)
+                        return done(err);
+                    }
+                    if (res.body.msg != "found")
+                        return done(new Error("Expected an other msg"));
+                    done();
+                })
+        })
     it("/movie respond created", (done) => {
         let data = {
             title: "test movie",
             year: 2021
         }
-        request(app)
+        let exists = false
+        all_movies.forEach(function(value) {
+            if (value.title == data.title) exists = true
+        });
+        if (exists) {
+            console.log("NOT EXECUTING CREATE TEST BECAUSE A MOVIE WITH THIS NAME EXISTS ALREADY")
+            done();
+        } else
+            request(app)
             .post("/movie")
             .send(data)
             .set("Accept", "application/json")
@@ -141,11 +196,56 @@ describe("MOVIES", () => {
             .expect(201)
             .end((err, res) => {
                 console.log("body:", res.body)
+                created_movie = res.body.data
                 if (err) {
                     console.log("ERROR!!", err)
                     return done(err);
                 }
                 if (res.body.msg != "created")
+                    return done(new Error("Expected an other msg"));
+                done();
+            })
+    })
+    it("/movie respond found", (done) => {
+        if (!created_movie) {
+            console.log("NOT EXECUTING MOVIE GET BECAUSE NO MOVIE WAS CREATED")
+            done();
+        } else
+            request(app)
+            .get("/movie/" + created_movie.id)
+            .set("Accept", "application/json")
+            .set("access-token", testData.token)
+            .expect("Content-Type", /json/)
+            .expect(200)
+            .end((err, res) => {
+                console.log("body:", res.body)
+                if (err) {
+                    console.log("ERROR!!", err)
+                    return done(err);
+                }
+                if (res.body.msg != "found")
+                    return done(new Error("Expected an other msg"));
+                done();
+            })
+    })
+    it("/movie respond deleted", (done) => {
+        if (!created_movie) {
+            console.log("NOT EXECUTING DELETE BECAUSE NO MOVIE WAS CREATED")
+            done();
+        } else
+            request(app)
+            .delete("/movie/" + created_movie.id)
+            .set("Accept", "application/json")
+            .set("access-token", testData.token)
+            .expect("Content-Type", /json/)
+            .expect(202)
+            .end((err, res) => {
+                console.log("body:", res.body)
+                if (err) {
+                    console.log("ERROR!!", err)
+                    return done(err);
+                }
+                if (res.body.msg != "deleted")
                     return done(new Error("Expected an other msg"));
                 done();
             })

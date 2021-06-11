@@ -125,24 +125,44 @@ export class MongoDB{
     getMovie(_id:String){
         return new Promise(
             async function(resolve, reject) {
-                let movie = await models.movieModel.find({_id},(err:any, movies:any) => {
+                await models.movieModel.findById(_id, (err:any, movie:any) => {
+                    console.log("GETTTTTTT",err,movie);
                     if (err) {
                         reject(err);
                     }
                     else {
-                        if(movie.length == 0)
+                        if(!movie)
                             reject({msg:"no movie with that ID"});
                         else
-                            resolve(movie)
+                        {
+                            resolve(movie[0])
+                        }
                     }
                 })
             }
         )
     }
-    async getMovies(){
-        return await models.movieModel.find((err:any, movies:any) => {
-            if (err) return console.error(err);
+    deleteMovie(_id:String){
+        return new Promise(
+            async function(resolve, reject) {
+                let deleted_movie = await models.movieModel.deleteOne({_id}, (err:any, movie:any) => {
+                        if (err) {
+                            reject(err);
+                        }
+                        else {
+                            console.log(movie)
+                            resolve(movie)
+                        }
+                    }
+                )
+            }
+        )
+    }
+    async listMovies(){  
+        let movies = await models.movieModel.find((err:any, movies:any) => {
+            if (err) return console.error("listMovies ERROR>>>",err);
         })
+        return movies
     }
     createUser(user:{email: String, name: String, password: String}, save:boolean=false){
         return new Promise(

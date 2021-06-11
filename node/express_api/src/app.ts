@@ -32,9 +32,11 @@ export class Aplication{
         this.router.post("/register", this.postRegister())
 
         this.router.get("/ptime", this.authMidleware(), this.time)
+        
         this.router.post("/movie", this.authMidleware(), validationHandler(movieSchema),this.postMovie())//
-        //this.router.post("/movie" ,this.post_movie())
-        this.router.get("/movie/:id", validationHandler({ id: movieIdSchema }, 'params'),this.getMovie())
+        this.router.get("/movies", this.authMidleware(), this.getMovies())
+        this.router.get("/movie/:id", this.authMidleware(), validationHandler({ id: movieIdSchema }, 'params'),this.getMovie())
+        this.router.delete("/movie/:id", this.authMidleware(), validationHandler({ id: movieIdSchema }, 'params'),this.deleteMovie())
         
 
     }
@@ -107,7 +109,22 @@ export class Aplication{
                     data : movie
                 });
             } catch(err){
-                console.log("GOTCHAAAAAAAAAA",err)
+                next(err)
+            }
+            
+        }
+        
+    }
+    getMovies(){
+        let ddbb = this.db
+        return async (req:any,res:any,next:any) => {
+            try {
+                let movies = await ddbb.listMovies() 
+                res.status(200).json({
+                    msg: 'found',
+                    data : movies
+                });
+            } catch(err){
                 next(err)
             }
             
@@ -119,8 +136,24 @@ export class Aplication{
         return async (req:any,res:any,next:any) => {
             try {
                 let movie = await ddbb.getMovie(req.query.id) 
-                res.status(201).json({
-                    msg: 'created',
+                res.status(200).json({
+                    msg: 'found',
+                    data : movie
+                });
+            } catch(err){
+                next(err)
+            }
+            
+        }
+        
+    }
+    deleteMovie(){
+        let ddbb = this.db
+        return async (req:any,res:any,next:any) => {
+            try {
+                let movie = await ddbb.deleteMovie(req.query.id) 
+                res.status(202).json({
+                    msg: 'deleted',
                     data : movie
                 });
             } catch(err){
@@ -137,7 +170,9 @@ export class Aplication{
         if(connected){
             this.app.listen(this.port,() =>{
                 console.log("Listening in port", this.port)
+                this.app.emit("serverStart")
             })
+
         }
         
     }

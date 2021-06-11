@@ -1,5 +1,5 @@
 const joi = require("@hapi/joi")
-export const movieIdSchema = joi.string().regex(/^[0-9a-fA-F]{20}$/)
+export const movieIdSchema = joi.string().regex(/^[0-9a-fA-F]{24}$/)
 export const movieSchema = {
     title: joi.string().max(80).required(),
     year: joi.number().min(1888).max(3000)
