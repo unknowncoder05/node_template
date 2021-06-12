@@ -134,8 +134,8 @@ export class Aplication{
     getMovie(){
         let ddbb = this.db
         return async (req:any,res:any,next:any) => {
-            try {
-                let movie = await ddbb.getMovie(req.query.id) 
+            try {     
+                let movie = await ddbb.getMovie(req.params.id) 
                 res.status(200).json({
                     msg: 'found',
                     data : movie
@@ -151,10 +151,10 @@ export class Aplication{
         let ddbb = this.db
         return async (req:any,res:any,next:any) => {
             try {
-                let movie = await ddbb.deleteMovie(req.query.id) 
+                let movie = await ddbb.deleteMovie(req.params.id) 
                 res.status(202).json({
                     msg: 'deleted',
-                    data : movie
+                    data : {deletedCount:movie.deletedCount}
                 });
             } catch(err){
                 next(err)

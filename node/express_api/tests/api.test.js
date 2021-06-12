@@ -155,25 +155,6 @@ describe("MOVIES", () => {
                 done();
             })
     })
-    if (all_movies.length != 0)
-        it("/movie respond movies", (done) => {
-            request(app)
-                .get("/movies/" + all_movies[0].id)
-                .set("Accept", "application/json")
-                .set("access-token", testData.token)
-                .expect("Content-Type", /json/)
-                .expect(200)
-                .end((err, res) => {
-                    console.log("body:", res.body)
-                    if (err) {
-                        console.log("ERROR!!", err)
-                        return done(err);
-                    }
-                    if (res.body.msg != "found")
-                        return done(new Error("Expected an other msg"));
-                    done();
-                })
-        })
     it("/movie respond created", (done) => {
         let data = {
             title: "test movie",

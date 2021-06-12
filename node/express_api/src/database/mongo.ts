@@ -122,10 +122,17 @@ export class MongoDB{
             }
         )
     }
-    getMovie(_id:String){
+    getMovie(id:String){
         return new Promise(
             async function(resolve, reject) {
-                await models.movieModel.findById(_id, (err:any, movie:any) => {
+                models.movieModel.find({_id:id})
+                .then((doc:any)=>{
+                   resolve(doc)
+                })
+                .catch((err:any)=>{
+                    reject(err)
+                });
+                /*await models.movieModel.findById(_id, (err:any, movie:any) => {
                     console.log("GETTTTTTT",err,movie);
                     if (err) {
                         reject(err);
@@ -138,23 +145,23 @@ export class MongoDB{
                             resolve(movie[0])
                         }
                     }
-                })
+                })*/
             }
         )
     }
-    deleteMovie(_id:String){
+    deleteMovie(id:String){
         return new Promise(
             async function(resolve, reject) {
-                let deleted_movie = await models.movieModel.deleteOne({_id}, (err:any, movie:any) => {
-                        if (err) {
-                            reject(err);
-                        }
-                        else {
-                            console.log(movie)
-                            resolve(movie)
-                        }
+                models.movieModel.deleteOne({_id:id})
+                .then((docs:any)=>{
+                    if(docs) {
+                      resolve(docs);
+                    } else {
+                      reject("no such movie exists");
                     }
-                )
+                }).catch((err:any)=>{
+                   reject(err);
+                })
             }
         )
     }
